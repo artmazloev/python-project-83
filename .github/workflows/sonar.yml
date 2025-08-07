@@ -32,8 +32,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=ntenengolts_python-project-83
-            -Dsonar.organization=ntenengolts
+            -Dsonar.projectKey=artmazloev_python-project-83
+            -Dsonar.organization=artmazloev
             -Dsonar.python.version=3.11
             -Dsonar.sources=page_analyzer
             -Dsonar.exclusions=/tests/,/__pycache__/
