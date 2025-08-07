@@ -1,11 +1,27 @@
 [project]
 name = "hexlet-code"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.12"
+description = "Hexlet Python Project"
+requires-python = ">=3.10"
 dependencies = [
     "dotenv>=0.9.9",
-    "flask>=3.1.1",
-    "gunicorn>=23.0.0",
+    "flask",
+    "gunicorn",
+    "python-dotenv",
+    "psycopg2-binary>=2.9.9,<3.0.0",
+    "validators>=0.20.0,<0.21.0",
+    "requests>=2.31.0",
+    "beautifulsoup4>=4.12.2"
 ]
+
+[tool.ruff]
+exclude = ["venv", ".venv"]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E402", "F401", "F403"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}<h1>Сайты</h1>{% endblock %}
+
+{% block content %}
+<div>
+  <table class="table table-bordered table-hover text-nowrap" data-test="urls">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Имя</th>
+      <th>Последняя проверка</th>
+      <th>Код ответа</th>
+    </tr>
+    </thead>
+    <tbody>
+      {% for address in addresses %}
+      <tr>
+        <td>{{ address.id }}</td>
+        <td>
+          <a href="{{ url_for('url', id=address.id) }}">
+          {{ address.name }}</a>
+        </td>
+        <td>{{ address.created_at or '' }}</td>
+        <td>{{ address.status_code or '' }}</td>
+      </tr>
+      {% endfor %}     
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

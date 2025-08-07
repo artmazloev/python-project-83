@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}<h1>Сайт: {{ address.name }}</h1>{% endblock %}
+
+{% block content %}
+<div class="table-responsive">
+  <table class="table table-bordered table-hover text-nowrap" data-test="urls"> <!-- //NOSONAR -->
+    <tbody>
+        <tr>
+          <td>ID</td>
+          <td>{{ address.id }}</td>
+        </tr>
+        <tr>
+            <td>Имя</td>
+            <td>{{ address.name }}</td>
+        </tr> 
+        <tr>
+            <td>Дата создания</td>
+            <td>{{ address.created_at }}</td>
+          </tr>    
+    </tbody>
+  </table>
+</div>
+
+<h2 class="mt-5 mb-3">Проверки</h2>
+    <form method="post" action="{{ url_for('check_url', id=address.id) }}">
+    <input type="submit" class="btn btn-primary" value="Запустить проверку">
+    </form>
+
+<div>
+  <table class="table table-bordered table-hover mt-2" data-test="checks">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Код ответа</th>
+        <th>h1</th>
+        <th>title</th>
+        <th>description</th>
+        <th>Дата создания</th>
+      </tr>
+    </thead>
+    {% if urls_check %}
+      <tbody>
+        {% for url_check in urls_check %}
+          <tr>
+            <td>{{ url_check.id }}</td>
+            <td>{{ url_check.status_code }}</td>
+            <td>{{ url_check.h1 }}</td>
+            <td>{{ url_check.title }}</td>
+            <td>{{ url_check.description }}</td>
+            <td>{{ url_check.created_at }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    {% endif %}
+  </table>
+</div>
+
+
+{% endblock %}
