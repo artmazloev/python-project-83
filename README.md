@@ -4,6 +4,8 @@
 
 ![Ruff Lint](https://github.com/artmazloev/python-project-83/actions/workflows/lint.yml/badge.svg)
 
+  [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=artmazloev_python-project-83&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=artmazloev_python-project-83)
+
 
 ### Описание проекта
 Это Flask-приложение для проверки сайтов. Проект позволяет:
@@ -20,3 +22,6 @@
 - Requests
 - BeautifulSoup
 - Render.com
+
+
+[Демонстрация](https://python-project-83-hfv6.onrender.com)
