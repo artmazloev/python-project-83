@@ -1,4 +1,5 @@
 from urllib.parse import urlparse
+from typing import Dict
 
 import requests
 import validators
@@ -6,65 +7,43 @@ from bs4 import BeautifulSoup
 
 
 class URLValidationErrors(Exception):
-    pass
+    """Base class for URL validation errors with optional context."""
+    def __init__(self, message: str = "", url: str | None = None):
+        details = f" URL: {url}" if url else ""
+        super().__init__(f"{message}{details}")
+        self.url = url
 
 
 class URLNotValid(URLValidationErrors):
-    pass
+    """Raised when a URL fails validation (syntax/scheme/host)."""
 
 
 class URLTooLong(URLValidationErrors):
-    pass
+    """Raised when a URL length exceeds configured maximum."""
 
 
-def check_url(url):
-    """
-    Checks if the provided URL is valid and within the maximum length allowed.
-
-    Parameters:
-    url (str): The URL to be checked.
-
-    Raises:
-    URLTooLong: If the URL length exceeds the maximum allowed length.
-    URLNotValid: If the URL is not a valid URL.
-
-    Returns:
-    None
-    """
-    MAX_LENGTH_URL = 255
+def check_url(url: str) -> None:
+    """Validate URL syntax and length (limit 2048). Raises on error."""
+    MAX_LENGTH_URL = 2048
     if len(url) > MAX_LENGTH_URL:
-        raise URLTooLong()
+        raise URLTooLong("URL exceeds maximum allowed length", url=url)
     if not validators.url(url):
-        raise URLNotValid()
+        raise URLNotValid("URL failed validation", url=url)
 
 
-def clear_url(url):
-    """
-    Clears the URL by extracting and returning the scheme and netloc parts.
-
-    Parameters:
-    url (str): The URL to be cleared.
-
-    Returns:
-    str: The cleared URL containing only the scheme
-    and netloc parts(https://www.example.com).
-    """
-    parse_url = urlparse(url)
-    return f'{parse_url.scheme}://{parse_url.netloc}'
+def normalize_origin(url: str) -> str:
+    """Return origin (scheme://netloc). Drops path, query, fragment."""
+    parsed = urlparse(url)
+    return f"{parsed.scheme}://{parsed.netloc}"
 
 
-def get_content(url):
-    """
-    Retrieves specific content elements from the provided URL
-    and returns a dictionary with the results.
+def extract_host_key(url: str) -> str:
+    """Return netloc (host[:port]) as a compact host key."""
+    return urlparse(url).netloc
 
-    Parameters:
-    url (str): The URL from which to extract content.
 
-    Returns:
-    dict: A dictionary containing the status code, h1 tag text,
-    title text, and description content.
-    """
+def get_content(url: str) -> Dict[str, str | int]:
+    """Fetch page and extract status_code, h1, title, description."""
     TIME_ANSWER = 10
     response = requests.get(url, timeout=TIME_ANSWER)
     requests.Response.raise_for_status(response)

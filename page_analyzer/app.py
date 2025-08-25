@@ -31,14 +31,16 @@ def index_get():
 @app.post('/urls')
 def index_post():
     address = request.form.get('url', '')
-    clean_url = utils.clear_url(address)
+    # Validate the original URL for UX; store normalized origin as a host-key
     try:
-        utils.check_url(clean_url)
+        utils.check_url(address)
     except (utils.URLTooLong, utils.URLNotValid):
         flash('Некорректный URL', 'danger')
         return render_template(
             'index.html',
             search=address), 422
+
+    clean_url = utils.normalize_origin(address)
 
     id_url = DB.find_url_name(clean_url)
     if id_url:
