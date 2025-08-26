@@ -22,7 +22,7 @@ DB = Database(DATABASE_URL)
 
 
 @app.route('/')
-def index_get():
+def index_get() -> str:
     return render_template(
         'index.html',
     )

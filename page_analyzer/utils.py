@@ -31,23 +31,28 @@ def check_url(url):
     Returns:
     None
     """
+    # Database column length limitation
     MAX_LENGTH_URL = 255
     if len(url) > MAX_LENGTH_URL:
-        raise URLTooLong()
+        raise URLTooLong(url)
     if not validators.url(url):
-        raise URLNotValid()
+        raise URLNotValid(url)
 
 
-def clear_url(url):
+def normalize_url(url):
     """
-    Clears the URL by extracting and returning the scheme and netloc parts.
+    Normalizes the URL by extracting and returning only the scheme and netloc parts.
 
     Parameters:
-    url (str): The URL to be cleared.
+    url (str): The URL to be normalized.
 
     Returns:
-    str: The cleared URL containing only the scheme
-    and netloc parts(https://www.example.com).
+    str: The normalized URL containing only the scheme and netloc parts
+         (e.g., 'https://www.example.com'). If the original URL lacks a scheme,
+         the result may be malformed.
+
+    Example:
+        clear_url('https://example.com/path?query=1') returns 'https://example.com'
     """
     parse_url = urlparse(url)
     return f'{parse_url.scheme}://{parse_url.netloc}'
@@ -55,15 +60,24 @@ def clear_url(url):
 
 def get_content(url):
     """
-    Retrieves specific content elements from the provided URL
-    and returns a dictionary with the results.
+    Retrieves specific content elements from the provided URL via HTTP GET request.
 
     Parameters:
     url (str): The URL from which to extract content.
 
     Returns:
-    dict: A dictionary containing the status code, h1 tag text,
-    title text, and description content.
+    dict: A dictionary containing:
+        - status_code: HTTP response status code
+        - h1: Text content of the first h1 tag (empty string if not found)
+        - title: Text content of the title tag (empty string if not found)  
+        - description: Content of meta description tag (empty string if not found)
+
+    Raises:
+    requests.exceptions.HTTPError: For HTTP error responses
+    requests.exceptions.RequestException: For connection/timeout errors
+    
+    Note:
+        Request timeout is set to 10 seconds.
     """
     TIME_ANSWER = 10
     response = requests.get(url, timeout=TIME_ANSWER)
