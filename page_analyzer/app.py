@@ -31,7 +31,7 @@ def index_get() -> str:
 @app.post('/urls')
 def index_post():
     address = request.form.get('url', '')
-    clean_url = utils.clear_url(address)
+    clean_url = utils.normalize_url(address)
     try:
         utils.check_url(clean_url)
     except (utils.URLTooLong, utils.URLNotValid):
