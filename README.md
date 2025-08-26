@@ -50,7 +50,7 @@
 │   ├── models.py        #
 │   └── ...              #
 └── build.sh             # (если используется) скрипт сборки/деплоя
-
+```
 
 ## Быстрый запуск (локально)
 
@@ -141,16 +141,3 @@ psql "<DATABASE_URL_из_Render>" -f database.sql
 |-----|------------|--------|
 | `SECRET_KEY` | Секретный ключ Flask | `secret_key` |
 | `DATABASE_URL` | Строка подключения к PostgreSQL | `postgresql://user:pass@localhost:5432/page_analyzer` |
-
-## Структура проекта (основные файлы)
-
-```
-.
-├── Makefile          # install/dev/start/render-start/lint/…
-├── pyproject.toml    # зависимости и конфигурация (Python ≥3.10)
-├── .env.example      # образец переменных окружения
-├── database.sql      # схема базы данных
-├── page_analyzer/    # модуль/пакет приложения, экспортирует `app`
-│   └── __init__.py   # (или иной модуль) с объектом Flask `app`
-└── build.sh          # вызывается целью `make build` (если используется)
-```
