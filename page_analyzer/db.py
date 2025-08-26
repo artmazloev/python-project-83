@@ -1,5 +1,5 @@
+import datetime
 from contextlib import contextmanager
-from typing import Any, Dict, Generator, Iterable, List, Optional
 
 import psycopg2
 from psycopg2.extras import DictCursor, execute_values
@@ -22,49 +22,30 @@ class Database:
     - get_content_check(url_id): Retrieve URL check content from the database.
     """
  
-    def __init__(self, database: str):
+    def __init__(self, database):
         """Initialize with database connection string."""
         self.db = database
         self.conn = None
  
     @contextmanager
-    def _cursor(self, write: bool = False) -> Generator[psycopg2.extensions.cursor, None, None]:
+    def _get_cursor(self):
         """
-        Context-managed cursor. If write=True, commit on success and rollback on error.
-        When write=False, no commit is issued (read-only usage).
-        """
-        if self.conn is None or self.conn.closed:
-            self.conn = psycopg2.connect(self.db)
-
-        with self.conn.cursor(cursor_factory=DictCursor) as cur:
-            try:
-                yield cur
-                if write:
-                    self.conn.commit()
-            except Exception as e:
-                if write:
-                    self.conn.rollback()
-                raise e
-
-    @contextmanager
-    def transaction(self) -> Generator[psycopg2.extensions.cursor, None, None]:
-        """
-        Explicit write transaction for grouping multiple operations.
-        Usage:
-            with db.transaction() as cur:
-                cur.execute(...)
-                cur.execute(...)
-        Commits on success, rollbacks on exception.
+        Context manager for handling database cursor
+        with automatic connection management.
+        
+        Yields:
+            A DictCursor instance for database operations.
         """
         if self.conn is None or self.conn.closed:
             self.conn = psycopg2.connect(self.db)
+        
         with self.conn.cursor(cursor_factory=DictCursor) as cur:
             try:
                 yield cur
                 self.conn.commit()
-            except Exception:
+            except Exception as e:
                 self.conn.rollback()
-                raise
+                raise e
  
     def _close(self):
         """Close the database connection if it exists and is open."""
@@ -72,7 +53,7 @@ class Database:
             self.conn.close()
         self.conn = None
  
-    def get_content(self) -> List[Dict[str, Any]]:
+    def get_content(self):
         """
         Retrieve content from the database with most recent check information.
         
@@ -90,11 +71,11 @@ class Database:
             LEFT JOIN url_checks ON urls.id = url_checks.url_id
             ORDER BY urls.id DESC, url_checks.created_at DESC
         """
-        with self._cursor(write=False) as cur:
+        with self._get_cursor() as cur:
             cur.execute(query)
             return [dict(row) for row in cur.fetchall()]
  
-    def exist_url_id(self, url_id: int) -> Optional[Dict[str, Any]]:
+    def exist_url_id(self, url_id):
         """
         Check if a URL with the given ID exists.
         
@@ -104,15 +85,11 @@ class Database:
         Returns:
             The URL record as a dictionary if found, None otherwise
         """
-        with self._cursor(write=False) as cur:
-            cur.execute(
-                "SELECT id, name, created_at FROM urls WHERE id = %s",
-                (url_id,)
-            )
-            row = cur.fetchone()
-            return dict(row) if row else None
+        with self._get_cursor() as cur:
+            cur.execute("SELECT * FROM urls WHERE id = %s", (url_id,))
+            return cur.fetchone()
  
-    def find_url_name(self, name: str) -> Optional[int]:
+    def find_url_name(self, name):
         """
         Find a URL by its name and return its ID.
         
@@ -122,12 +99,12 @@ class Database:
         Returns:
             The URL ID if found, None otherwise
         """
-        with self._cursor(write=False) as cur:
+        with self._get_cursor() as cur:
             cur.execute("SELECT id FROM urls WHERE name = %s", (name,))
             result = cur.fetchone()
             return result[0] if result else None
  
-    def save_url(self, url: str) -> int:
+    def save_url(self, url):
         """
         Save a new URL to the database.
         
@@ -138,15 +115,15 @@ class Database:
             The ID of the newly created URL record
         """
         query = """
-            INSERT INTO urls (name)
-            VALUES (%s)
+            INSERT INTO urls (name, created_at)
+            VALUES (%s, %s)
             RETURNING id
         """
-        with self._cursor(write=True) as cur:
-            cur.execute(query, (url,))
+        with self._get_cursor() as cur:
+            cur.execute(query, (url, datetime.date.today()))
             return cur.fetchone()[0]
  
-    def save_url_check(self, content: Dict[str, Any]) -> None:
+    def save_url_check(self, content):
         """
         Save URL check information to the database.
         
@@ -160,21 +137,22 @@ class Database:
         """
         query = """
             INSERT INTO url_checks (
-                url_id, status_code, h1, title, description
+                url_id, status_code, h1, title, description, created_at
             ) VALUES %s
         """
-        check_info: Iterable[tuple] = [(
+        check_info = [(
             content['url_id'],
             content['status_code'],
             content['h1'],
             content['title'],
-            content['description']
+            content['description'],
+            datetime.date.today()
         )]
         
-        with self._cursor(write=True) as cur:
+        with self._get_cursor() as cur:
             execute_values(cur, query, check_info)
  
-    def get_content_check(self, url_id: int) -> List[Dict[str, Any]]:
+    def get_content_check(self, url_id):
         """
         Retrieve all check records for a specific URL.
         
@@ -185,14 +163,13 @@ class Database:
             List of dictionaries containing check information
         """
         query = """
-            SELECT id, url_id, status_code, h1, title, description, created_at
-            FROM url_checks
+            SELECT * FROM url_checks
             WHERE url_id = %s
             ORDER BY id DESC
         """
-        with self._cursor(write=False) as cur:
+        with self._get_cursor() as cur:
             cur.execute(query, (url_id,))
-            return [dict(row) for row in cur.fetchall()]
+            return cur.fetchall()
  
     def __enter__(self):
         """Support for context manager protocol."""
