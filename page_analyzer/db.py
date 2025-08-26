@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 from typing import Any, Dict, Generator, Iterable, List, Optional
-from psycopg2.extensions import cursor as PgCursor
 
 import psycopg2
 from psycopg2.extras import DictCursor, execute_values
@@ -29,7 +28,7 @@ class Database:
         self.conn = None
  
     @contextmanager
-    def _cursor(self, write: bool = False) -> Generator[PgCursor, None, None]:
+    def _cursor(self, write: bool = False) -> Generator[psycopg2.extensions.cursor, None, None]:
         """
         Context-managed cursor. If write=True, commit on success and rollback on error.
         When write=False, no commit is issued (read-only usage).
@@ -48,7 +47,7 @@ class Database:
                 raise e
 
     @contextmanager
-    def transaction(self) -> Generator[PgCursor, None, None]:
+    def transaction(self) -> Generator[psycopg2.extensions.cursor, None, None]:
         """
         Explicit write transaction for grouping multiple operations.
         Usage:
