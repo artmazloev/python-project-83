@@ -1,5 +1,6 @@
-from urllib.parse import urlparse
+# page_analyzer/utils.py
 
+from urllib.parse import urlparse
 import requests
 import validators
 from bs4 import BeautifulSoup
@@ -41,18 +42,20 @@ def check_url(url):
 
 def normalize_url(url):
     """
-    Normalizes the URL by extracting and returning only the scheme and netloc parts.
+    Normalizes the URL by extracting and returning only the scheme and
+    netloc parts.
 
     Parameters:
     url (str): The URL to be normalized.
 
     Returns:
     str: The normalized URL containing only the scheme and netloc parts
-         (e.g., 'https://www.example.com'). If the original URL lacks a scheme,
-         the result may be malformed.
+         (e.g., 'https://www.example.com'). If the original URL lacks a
+         scheme, the result may be malformed.
 
     Example:
-        clear_url('https://example.com/path?query=1') returns 'https://example.com'
+        clear_url('https://example.com/path?query=1')
+        returns 'https://example.com'
     """
     parse_url = urlparse(url)
     return f'{parse_url.scheme}://{parse_url.netloc}'
@@ -60,7 +63,8 @@ def normalize_url(url):
 
 def get_content(url):
     """
-    Retrieves specific content elements from the provided URL via HTTP GET request.
+    Retrieves specific content elements from the provided URL via HTTP
+    GET request.
 
     Parameters:
     url (str): The URL from which to extract content.
@@ -69,19 +73,20 @@ def get_content(url):
     dict: A dictionary containing:
         - status_code: HTTP response status code
         - h1: Text content of the first h1 tag (empty string if not found)
-        - title: Text content of the title tag (empty string if not found)  
-        - description: Content of meta description tag (empty string if not found)
+        - title: Text content of the title tag (empty string if not found)
+        - description: Content of meta description tag (empty string
+          if not found)
 
     Raises:
     requests.exceptions.HTTPError: For HTTP error responses
     requests.exceptions.RequestException: For connection/timeout errors
-    
+
     Note:
         Request timeout is set to 10 seconds.
     """
     TIME_ANSWER = 10
     response = requests.get(url, timeout=TIME_ANSWER)
-    requests.Response.raise_for_status(response)
+    response.raise_for_status()
 
     soup = BeautifulSoup(response.content, "html.parser")
 

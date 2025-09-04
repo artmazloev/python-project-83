@@ -6,8 +6,8 @@ import psycopg2
 from psycopg2.pool import SimpleConnectionPool
 from psycopg2.extras import DictCursor
 
-# 1. Мы больше не создаем пул здесь. Просто объявляем глобальную переменную.
 pool = None
+
 
 def connect_db():
     """
@@ -24,19 +24,20 @@ def connect_db():
         except psycopg2.OperationalError as e:
             raise RuntimeError(f"Could not connect to the database: {e}") from e
 
+
 @contextmanager
 def get_connection():
     """
     Контекстный менеджер для получения соединения из пула.
     Гарантирует, что соединение будет возвращено в пул после использования.
     """
-    # 2. Вызываем нашу новую функцию. Она создаст пул при первом запуске.
     connect_db()
     conn = pool.getconn()
     try:
         yield conn
     finally:
         pool.putconn(conn)
+
 
 def close_pool():
     """
@@ -46,10 +47,6 @@ def close_pool():
     if pool:
         pool.closeall()
         pool = None
-
-# Все остальные функции (get_content, find_url_name и т.д.)
-# остаются АБСОЛЮТНО БЕЗ ИЗМЕНЕНИЙ.
-# Они будут использовать get_connection(), который теперь работает "лениво".
 
 
 def get_content():
