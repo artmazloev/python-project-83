@@ -6,17 +6,23 @@ import psycopg2
 from psycopg2.pool import SimpleConnectionPool
 from psycopg2.extras import DictCursor
 
-# Загружаем URL базы данных из переменных окружения
-DATABASE_URL = os.getenv('DATABASE_URL')
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL environment variable is not set")
+# 1. Мы больше не создаем пул здесь. Просто объявляем глобальную переменную.
+pool = None
 
-# Инициализируем пул соединений один раз при загрузке модуля
-try:
-    pool = SimpleConnectionPool(minconn=1, maxconn=10, dsn=DATABASE_URL)
-except psycopg2.OperationalError as e:
-    raise RuntimeError(f"Could not connect to the database: {e}") from e
-
+def connect_db():
+    """
+    Создает пул соединений, если он еще не создан.
+    Эта функция будет вызвана только при первом обращении к базе.
+    """
+    global pool
+    if pool is None:
+        DATABASE_URL = os.getenv('DATABASE_URL')
+        if not DATABASE_URL:
+            raise RuntimeError("DATABASE_URL environment variable is not set")
+        try:
+            pool = SimpleConnectionPool(minconn=1, maxconn=10, dsn=DATABASE_URL)
+        except psycopg2.OperationalError as e:
+            raise RuntimeError(f"Could not connect to the database: {e}") from e
 
 @contextmanager
 def get_connection():
@@ -24,11 +30,26 @@ def get_connection():
     Контекстный менеджер для получения соединения из пула.
     Гарантирует, что соединение будет возвращено в пул после использования.
     """
+    # 2. Вызываем нашу новую функцию. Она создаст пул при первом запуске.
+    connect_db()
     conn = pool.getconn()
     try:
         yield conn
     finally:
         pool.putconn(conn)
+
+def close_pool():
+    """
+    Закрывает все соединения в пуле, если пул был создан.
+    """
+    global pool
+    if pool:
+        pool.closeall()
+        pool = None
+
+# Все остальные функции (get_content, find_url_name и т.д.)
+# остаются АБСОЛЮТНО БЕЗ ИЗМЕНЕНИЙ.
+# Они будут использовать get_connection(), который теперь работает "лениво".
 
 
 def get_content():
@@ -123,11 +144,3 @@ def get_content_check(url_id):
         with conn.cursor(cursor_factory=DictCursor) as cur:
             cur.execute(query, (url_id,))
             return [dict(row) for row in cur.fetchall()]
-
-
-def close_pool():
-    """
-    Закрывает все соединения в пуле.
-    Полезно для чистого завершения работы приложения.
-    """
-    pool.closeall()
